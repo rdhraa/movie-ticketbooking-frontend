@@ -58,6 +58,20 @@ export const SignupPage = ({ role }) => {
       <div className="relative z-10 bg-opacity-10 rounded-xl shadow-xl p-4 max-w-xs w-full backdrop-blur-lg border border-white border-opacity-20">
         <h2 className="text-center text-2xl font-bold mb-4">Sign Up {user.role}</h2>
         <form onSubmit={handleSubmit(onSubmit)}>
+          {/* Name Field */}
+          <div className="mb-4 relative">
+            <input
+              className="w-full p-2 rounded-lg bg-white placeholder-gray-500 bg-opacity-20 text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-400"
+              type="text"
+              id="name"
+              placeholder="Full Name"
+              {...register("name", { required: "Full Name is required" })}
+            />
+            <i className="absolute right-3 top-2 font-normal not-italic">👤</i>
+            {errors.name && <span className="text-red-500 text-xs">{errors.name.message}</span>}
+          </div>
+
+          {/* Email Field */}
           <div className="mb-4 relative">
             <input
               className="w-full p-2 rounded-lg bg-white placeholder-gray-500 bg-opacity-20 text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-400"
@@ -66,10 +80,30 @@ export const SignupPage = ({ role }) => {
               placeholder="Email"
               {...register("email", { required: "Email is required" })}
             />
-            <i className="absolute right-3 top-2  font-normal not-italic">👤</i>
+            <i className="absolute right-3 top-2 font-normal not-italic">📧</i>
             {errors.email && <span className="text-red-500 text-xs">{errors.email.message}</span>}
           </div>
 
+          {/* Mobile Number Field */}
+          <div className="mb-4 relative">
+            <input
+              className="w-full p-2 rounded-lg bg-white placeholder-gray-500 bg-opacity-20 text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-400"
+              type="tel"
+              id="mobile"
+              placeholder="Mobile Number"
+              {...register("mobile", {
+                required: "Mobile number is required",
+                pattern: {
+                  value: /^[0-9]{10}$/,
+                  message: "Invalid mobile number"
+                }
+              })}
+            />
+            <i className="absolute right-3 top-2 font-normal not-italic">📱</i>
+            {errors.mobile && <span className="text-red-500 text-xs">{errors.mobile.message}</span>}
+          </div>
+
+          {/* Password Field */}
           <div className="mb-4 relative">
             <input
               className="w-full p-2 rounded-lg bg-white placeholder-gray-500 bg-opacity-20 text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-400"
@@ -78,10 +112,11 @@ export const SignupPage = ({ role }) => {
               placeholder="Password"
               {...register("password", { required: "Password is required" })}
             />
-            <i className="absolute right-3 top-2  font-normal not-italic">🔒</i>
+            <i className="absolute right-3 top-2 font-normal not-italic">🔒</i>
             {errors.password && <span className="text-red-500 text-xs">{errors.password.message}</span>}
           </div>
 
+          {/* Confirm Password Field */}
           <div className="mb-4 relative">
             <input
               className="w-full p-2 rounded-lg bg-white placeholder-gray-500 bg-opacity-20 text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-400"
@@ -97,6 +132,7 @@ export const SignupPage = ({ role }) => {
             {errors.confirmPassword && <span className="text-red-500 text-xs">{errors.confirmPassword.message}</span>}
           </div>
 
+          {/* Remember Me and Forgot Password */}
           <div className="flex justify-between items-center text-sm text-white mb-4">
             <label className="flex items-center">
               <input type="checkbox" className="mr-2" />
@@ -105,6 +141,7 @@ export const SignupPage = ({ role }) => {
             <Link className="hover:underline">Forgot password?</Link>
           </div>
 
+          {/* Submit Button */}
           <button
             type="submit"
             className="w-full bg-purple-600 hover:bg-purple-700  p-2 rounded-lg font-semibold transition"
@@ -113,6 +150,7 @@ export const SignupPage = ({ role }) => {
           </button>
         </form>
 
+        {/* Already have an account? */}
         <p className="text-center text-sm mt-4 text-white">
           Already have an account? <Link to={user.loginRoute} className="underline hover:text-purple-300">Login</Link>
         </p>
@@ -120,6 +158,5 @@ export const SignupPage = ({ role }) => {
     </div>
   );
 };
-
 
 
