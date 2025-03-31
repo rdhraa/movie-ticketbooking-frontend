@@ -10,6 +10,7 @@ import {Films} from "../pages/user/Films";
 import { FilmDetails } from "../pages/user/FilmDetails";
 import { LoginPage } from "../pages/shared/LoginPage";
 import { TheaterLayout } from "../layout/TheaterLayout";
+import { SignupPage } from "../pages/shared/SignupPage";
 
 export const router = createBrowserRouter([
     {
@@ -35,7 +36,7 @@ export const router = createBrowserRouter([
         },
         {
           path: "signup",
-          element: <h1>signup</h1>,
+          element: <SignupPage/>,
         },
         {
           path: "films",
