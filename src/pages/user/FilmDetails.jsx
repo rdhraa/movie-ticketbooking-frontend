@@ -1,11 +1,12 @@
 import React from 'react'
 import { Usefetch } from '../../hooks/Usefetch'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 
 
 
 export const FilmDetails = () => {
   const params = useParams()
+  const navigate = useNavigate()
   console.log(params, "====params")
   const [filmDetails, isLoading, error] = Usefetch(`/film/about-film/${params?.id}`)
 
@@ -43,7 +44,8 @@ export const FilmDetails = () => {
             
 
             {/* Book Tickets Button */}
-            <button className="bg-indigo-600 text-white px-6 py-3 rounded-lg shadow-md hover:bg-indigo-700 transition duration-200">
+            <button className="bg-indigo-600 text-white px-6 py-3 rounded-lg shadow-md hover:bg-indigo-700 transition duration-200"
+            onClick={()=>navigate(`/screening/film/${filmDetails?._id}`)}>
               Book Tickets Now
             </button>
           </div>

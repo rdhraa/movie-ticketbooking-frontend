@@ -7,11 +7,11 @@ import { Outlet, useNavigate } from 'react-router-dom';
 const{isUserAuth}=useSelector((state)=>state.user)
     const navigate = useNavigate()
 
-    useEffect(()=>{
+    //useEffect(()=>{
     if(!isUserAuth){
          navigate("/login")
     }
-  },[]);
+  //},[]);
 
  return <Outlet/>
 }
