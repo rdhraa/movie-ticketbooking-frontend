@@ -19,6 +19,8 @@ export const Footer = () => {
     <a className="link link-hover">Jobs</a>
     <a className="link link-hover">Press kit</a>
     <Link to={"/theater/login"}>Theater Owner Login</Link>
+    <Link to="/admin/login">Admin Login</Link>
+
   </nav>
   <nav>
     <h6 className="footer-title">Social</h6>
@@ -62,5 +64,3 @@ export const Footer = () => {
     </div>
   )
 }
-
-

@@ -1,179 +1,186 @@
 import React, { useEffect, useState } from 'react';
-import { Usefetch } from '../../hooks/Usefetch'; 
 import { useParams } from 'react-router-dom';
-import {loadStripe} from "@stripe/stripe-js"
+import { loadStripe } from '@stripe/stripe-js';
 import { axiosInstance } from '../../config/axiosinstance';
-
-
+import { Usefetch } from '../../hooks/Usefetch';
 
 export const SeatBooking = () => {
-  const params = useParams(); 
+  const params = useParams();
 
-  // Fetching data
   const [showDetails, isLoading, error] = Usefetch(`/screening/film/${params.filmId}`);
   const [filmDetails, setFilmDetails] = useState(null);
   const [filmDetailsData, filmDetailsLoading, filmDetailsError] = Usefetch(`/film/about-film/${params.filmId}`);
   const [selectedSeats, setSelectedSeats] = useState([]);
+  const [isProcessing, setIsProcessing] = useState(false);
 
- //payment
+  const makePayment = async () => {
+    try {
+      setIsProcessing(true);
+      const stripe = await loadStripe(import.meta.env.VITE_STRIPE_Publishable_key);
 
- const makePayment = async () => {
-  try {
-    const stripe = await loadStripe(import.meta.env.VITE_STRIPE_Publishable_key);
-
-    const payload = {
-      filmTitle: filmDetails.title,
-      theaterName: showDetails[0].theaterId.name,
-      showtime: showDetails[0].showtime,
-      selectedSeats,
-      totalAmount: selectedSeats.length * showDetails[0].price,
-      pricePerSeat: showDetails[0].price,
-    };
-
-    console.log("Sending to backend:", payload);
-
-    const session = await axiosInstance({
-      url: "/payment/create-checkout-session",
-      method: "POST",
-      data: {
+      const payload = {
         filmTitle: filmDetails.title,
         theaterName: showDetails[0].theaterId.name,
         showtime: showDetails[0].showtime,
         selectedSeats,
         totalAmount: selectedSeats.length * showDetails[0].price,
         pricePerSeat: showDetails[0].price,
-      },
-    });
+      };
 
-    console.log(session, "=======session");
+      localStorage.setItem('bookingDetails', JSON.stringify({
+        screeningId: showDetails[0]._id,
+        numSeats: selectedSeats.length,
+        seatNumbers: selectedSeats,
+      }));
 
-    const result = await stripe.redirectToCheckout({
-      sessionId: session.data.sessionId,
-    });
+      const session = await axiosInstance({
+        url: '/payment/create-checkout-session',
+        method: 'POST',
+        data: payload,
+      });
 
-    if (result.error) {
-      console.error(result.error.message);
+      const result = await stripe.redirectToCheckout({ sessionId: session.data.sessionId });
+      if (result.error) {
+        console.error(result.error.message);
+      }
+    } catch (error) {
+      console.log("Payment error:", error);
+    } finally {
+      setIsProcessing(false);
     }
-  } catch (error) {
-    console.log("Payment error:", error);
-  }
-};
+  };
 
-
-  // Fetch film details when available
   useEffect(() => {
     if (filmDetailsData) {
       setFilmDetails(filmDetailsData);
     }
   }, [filmDetailsData]);
 
-  // Handle loading and error states
   if (isLoading || filmDetailsLoading || !showDetails || !filmDetails) {
     return <p className="text-center text-xl">Loading...</p>;
   }
 
   if (error || filmDetailsError) {
-    return <p className="text-center text-xl text-red-500">Error loading show details or film details.</p>;
+    return <p className="text-center text-xl text-red-500">Error loading data.</p>;
+  }
+
+  if (showDetails && showDetails.length === 0) {
+    return <p className="text-center text-xl text-red-500">No screenings available for this film.</p>;
   }
 
   if (showDetails && showDetails.length > 0 && filmDetails) {
-    const { filmId, theaterId, showtime, price, availableSeats, totalSeats, bookedSeats = [] } = showDetails[0];
+    const { theaterId, showtime, price, bookedSeats = [], screenName } = showDetails[0];
     const filmName = filmDetails.title;
-    const theaterName = theaterId ? theaterId.name : "Unknown Theater";
+    const theaterName = theaterId?.name || 'Unknown Theater';
     const formattedShowtime = new Date(showtime).toLocaleString();
-    
-    // Create seat layout
-    const rows = 10;
-    const columns = 15;
-    const seatLayout = [];
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < columns; col++) {
+
+    const theaterScreens = theaterId.screens || [];
+    const currentScreen = theaterScreens.find(screen => screen.name === screenName);
+    const totalSeats = currentScreen?.capacity || 0;
+
+    const seatsPerRow = 10;
+    const numRows = Math.ceil(totalSeats / seatsPerRow);
+    const dynamicSeatLayout = [];
+
+    for (let row = 0; row < numRows; row++) {
+      for (let col = 0; col < seatsPerRow; col++) {
+        const seatNumber = row * seatsPerRow + col + 1;
+        if (seatNumber > totalSeats) break;
         const seatLabel = `${String.fromCharCode(65 + row)}${col + 1}`;
-        seatLayout.push(seatLabel);
+        dynamicSeatLayout.push(seatLabel);
       }
     }
 
-    // Handle seat selection logic
     const handleSeatClick = (seat) => {
-      if (!bookedSeats.includes(seat)) { // Ensure the seat isn't booked
-        setSelectedSeats((prevSelectedSeats) => {
-          const newSelectedSeats = prevSelectedSeats.includes(seat)
-            ? prevSelectedSeats.filter((s) => s !== seat) // Deselect seat
-            : [...prevSelectedSeats, seat]; // Select seat
-          return newSelectedSeats;
-        });
+      if (!bookedSeats.includes(seat)) {
+        setSelectedSeats(prev =>
+          prev.includes(seat) ? prev.filter(s => s !== seat) : [...prev, seat]
+        );
       }
     };
 
-    // Calculate total amount based on selected seats
     const totalAmount = selectedSeats.length * price;
 
     return (
       <div className="container mx-auto p-4">
-        {/* Film Details */}
-        
-
-<div className="mb-8">
-    {/* Film Name in Top Left Corner */}
-    <h1 className="text-4xl font-bold mb-2">{filmName}</h1>
-    
-    {/* Theater Name */}
-    <p className="text-xl mb-2"><strong>Theater:</strong> {theaterName}</p>
-
-    {/* Showtime */}
-    <p className="text-lg mb-2"><strong>Showtime:</strong> {formattedShowtime}</p>
-
-    {/* Price */}
-    <p className="text-lg mb-2"><strong>Price:</strong> Rs{price}</p>
-
-    {/* Available Seats */}
-    <p className="text-lg mb-2"><strong>Available Seats:</strong> {availableSeats}</p>
-
-    {/* Booked Seats */}
-    <p className="text-lg"><strong>Booked Seats:</strong> {bookedSeats.join(', ')}</p>
-  </div>
-
-
-        {/* Seat Layout */}
-        <div className="grid grid-cols-15 gap-2 mb-8">
-          {seatLayout.map((seat, index) => {
-            const isBooked = bookedSeats.includes(seat); // Check if the seat is booked
-            const isSelected = selectedSeats.includes(seat); // Check if the seat is selected
-            return (
-              <button
-                key={index}
-                className={`w-14 h-14 rounded-lg text-white font-semibold ${
-                  isBooked ? 'bg-gray-400 cursor-not-allowed' : isSelected ? 'bg-blue-500' : 'bg-green-500 hover:bg-green-700'
-                }`}
-                disabled={isBooked}
-                onClick={() => handleSeatClick(seat)}
-              >
-                {seat}
-              </button>
-            );
-          })}
+        {/* Film and Show Info */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-2">{filmName}</h1>
+          <p className="text-xl mb-2"><strong>Theater:</strong> {theaterName}</p>
+          <p className="text-lg mb-2"><strong>Showtime:</strong> {formattedShowtime}</p>
+          <p className="text-lg mb-2"><strong>Price:</strong> Rs{price}</p>
+          <p className="text-lg mb-2"><strong>Screen:</strong> {screenName}</p>
+          <p className="text-lg mb-2"><strong>Total Seats:</strong> {totalSeats}</p>
+          <p className="text-lg"><strong>Booked:</strong> {bookedSeats.join(', ')}</p>
         </div>
 
-        {/* Screen Representation */}
+        {/* Seat Legend */}
+        <div className="flex justify-center gap-6 mb-6">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-green-500 rounded"></div>
+            <span>Available</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-blue-500 rounded"></div>
+            <span>Selected</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-gray-400 rounded"></div>
+            <span>Booked</span>
+          </div>
+        </div>
+
+        {/* Seat Layout */}
+        <div className="overflow-x-auto mb-8">
+          <div
+            className="grid gap-2"
+            style={{ gridTemplateColumns: `repeat(${seatsPerRow}, minmax(0, 1fr))` }}
+          >
+            {dynamicSeatLayout.map((seat, index) => {
+              const isBooked = bookedSeats.includes(seat);
+              const isSelected = selectedSeats.includes(seat);
+              return (
+                <button
+                  key={index}
+                  aria-label={`Seat ${seat} ${isBooked ? 'booked' : isSelected ? 'selected' : 'available'}`}
+                  className={`aspect-square w-full rounded-lg text-white font-semibold text-sm sm:text-base ${
+                    isBooked ? 'bg-gray-400 cursor-not-allowed'
+                    : isSelected ? 'bg-blue-500' : 'bg-green-500 hover:bg-green-700'
+                  }`}
+                  disabled={isBooked}
+                  onClick={() => handleSeatClick(seat)}
+                >
+                  {seat}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Screen Indicator */}
         <div className="flex justify-center items-center mb-8">
           <div className="w-full h-10 bg-yellow-500 text-white flex justify-center items-center rounded-lg">
             SCREEN THIS WAY
           </div>
         </div>
 
-        {/* Selected Seats and Total Price */}
+        {/* Summary */}
         <div className="text-center mb-8">
-          <p><strong>Selected Seats:</strong> {selectedSeats.join(', ')}</p>
+          <p><strong>Selected Seats:</strong> {selectedSeats.join(', ') || 'None'}</p>
           <p><strong>Total: </strong> Rs{totalAmount}</p>
         </div>
 
-        {/* Payment Button */}
+        {/* Pay Button */}
         <div className="text-center">
-          <button className={`px-6 py-2 rounded-lg text-white ${selectedSeats.length === 0
-            ? 'bg-gray-400 cursor-not-allowed'
-            : 'bg-blue-500 hover:bg-blue-700'
-  }`} onClick={makePayment}>
-            Proceed to Payment
+          <button
+            className={`px-6 py-2 rounded-lg text-white ${selectedSeats.length === 0 || isProcessing
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-blue-500 hover:bg-blue-700'
+            }`}
+            disabled={selectedSeats.length === 0 || isProcessing}
+            onClick={makePayment}
+          >
+            {isProcessing ? 'Processing...' : 'Proceed to Payment'}
           </button>
         </div>
       </div>

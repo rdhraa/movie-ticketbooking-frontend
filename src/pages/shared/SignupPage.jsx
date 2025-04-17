@@ -4,39 +4,29 @@ import { axiosInstance } from '../../config/axiosinstance';
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { saveUser } from "../../redux/features/userSlice";
+import { toast } from "react-hot-toast";
 
-export const SignupPage = ({ role }) => {
+export const UserSignupPage = () => {
   const { register, handleSubmit, watch, formState: { errors } } = useForm();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const user = {
-    role: "user",
-    signupAPI: "/user/signup",
-    loginRoute: "/login",
-    profileRoute: "/user/profile",
-  };
-
-  if (role === "theater") {
-    user.role = "theater";
-    user.signupAPI = "/theater/signup";
-    user.loginRoute = "/theater/login";
-    user.profileRoute = "/theater/profile";
-  }
+  const signupAPI = "/user/signup";
+  const loginRoute = "/login";
+  const profileRoute = "/user/profile";
 
   const onSubmit = async (data) => {
     try {
       const response = await axiosInstance({
         method: "POST",
-        url: user.signupAPI,
+        url: signupAPI,
         data: data,
       });
-      console.log("response====", response);
       dispatch(saveUser(response?.data?.data));
-      // toast.success("Signup successful");
-      navigate(user.profileRoute);
+      toast.success("Signup successful");
+      navigate(profileRoute);
     } catch (error) {
-      // toast.error("Signup Failed");
+      toast.error("Signup Failed");
       console.log(error);
     }
   };
@@ -45,118 +35,74 @@ export const SignupPage = ({ role }) => {
 
   return (
     <div className="min-h-screen flex justify-center items-center relative bg-gradient-to-b from-purple-800 to-purple-900">
-      {/* Background Image */}
-      <div
-        className="absolute inset-0 bg-no-repeat bg-cover bg-center"
-        style={{ backgroundImage: `url('/bg-img.webp')` }}
-      ></div>
-
-      {/* Overlay Gradient */}
+      <div className="absolute inset-0 bg-no-repeat bg-cover bg-center" style={{ backgroundImage: `url('/bg-img.webp')` }}></div>
       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-70"></div>
 
-      {/* Signup Card */}
       <div className="relative z-10 bg-opacity-10 rounded-xl shadow-xl p-4 max-w-xs w-full backdrop-blur-lg border border-white border-opacity-20">
-        <h2 className="text-center text-2xl font-bold mb-4">Sign Up {user.role}</h2>
+        <h2 className="text-center text-2xl font-bold mb-4">Sign Up User</h2>
         <form onSubmit={handleSubmit(onSubmit)}>
-          {/* Name Field */}
+          {/* Name */}
           <div className="mb-4 relative">
-            <input
+            <input {...register("name", { required: "Full Name is required" })}
               className="w-full p-2 rounded-lg bg-white placeholder-gray-500 bg-opacity-20 text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-400"
-              type="text"
-              id="name"
-              placeholder="Full Name"
-              {...register("name", { required: "Full Name is required" })}
-            />
-            <i className="absolute right-3 top-2 font-normal not-italic">👤</i>
+              type="text" placeholder="Full Name" />
+            <i className="absolute right-3 top-2">👤</i>
             {errors.name && <span className="text-red-500 text-xs">{errors.name.message}</span>}
           </div>
 
-          {/* Email Field */}
+          {/* Email */}
           <div className="mb-4 relative">
-            <input
+            <input {...register("email", { required: "Email is required" })}
               className="w-full p-2 rounded-lg bg-white placeholder-gray-500 bg-opacity-20 text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-400"
-              type="email"
-              id="email"
-              placeholder="Email"
-              {...register("email", { required: "Email is required" })}
-            />
-            <i className="absolute right-3 top-2 font-normal not-italic">📧</i>
+              type="email" placeholder="Email" />
+            <i className="absolute right-3 top-2">📧</i>
             {errors.email && <span className="text-red-500 text-xs">{errors.email.message}</span>}
           </div>
 
-          {/* Mobile Number Field */}
+          {/* Mobile */}
           <div className="mb-4 relative">
-            <input
+            <input {...register("mobile", {
+              required: "Mobile number is required",
+              pattern: { value: /^[0-9]{10}$/, message: "Invalid mobile number" }
+            })}
               className="w-full p-2 rounded-lg bg-white placeholder-gray-500 bg-opacity-20 text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-400"
-              type="tel"
-              id="mobile"
-              placeholder="Mobile Number"
-              {...register("mobile", {
-                required: "Mobile number is required",
-                pattern: {
-                  value: /^[0-9]{10}$/,
-                  message: "Invalid mobile number"
-                }
-              })}
-            />
-            <i className="absolute right-3 top-2 font-normal not-italic">📱</i>
+              type="tel" placeholder="Mobile Number" />
+            <i className="absolute right-3 top-2">📱</i>
             {errors.mobile && <span className="text-red-500 text-xs">{errors.mobile.message}</span>}
           </div>
 
-          {/* Password Field */}
+          {/* Password */}
           <div className="mb-4 relative">
-            <input
+            <input {...register("password", { required: "Password is required" })}
               className="w-full p-2 rounded-lg bg-white placeholder-gray-500 bg-opacity-20 text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-400"
-              type="password"
-              id="password"
-              placeholder="Password"
-              {...register("password", { required: "Password is required" })}
-            />
-            <i className="absolute right-3 top-2 font-normal not-italic">🔒</i>
+              type="password" placeholder="Password" />
+            <i className="absolute right-3 top-2">🔒</i>
             {errors.password && <span className="text-red-500 text-xs">{errors.password.message}</span>}
           </div>
 
-          {/* Confirm Password Field */}
+          {/* Confirm Password */}
           <div className="mb-4 relative">
-            <input
+            <input {...register("confirmPassword", {
+              validate: value => value === password || "Passwords do not match"
+            })}
               className="w-full p-2 rounded-lg bg-white placeholder-gray-500 bg-opacity-20 text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-400"
-              type="password"
-              id="confirmPassword"
-              placeholder="Confirm Password"
-              {...register("confirmPassword", {
-                validate: value =>
-                  value === password || "Passwords do not match"
-              })}
-            />
-            <i className="absolute right-3 top-2 font-normal not-italic">🔒</i>
+              type="password" placeholder="Confirm Password" />
+            <i className="absolute right-3 top-2">🔒</i>
             {errors.confirmPassword && <span className="text-red-500 text-xs">{errors.confirmPassword.message}</span>}
           </div>
 
-          {/* Remember Me and Forgot Password */}
-          <div className="flex justify-between items-center text-sm text-white mb-4">
-            <label className="flex items-center">
-              <input type="checkbox" className="mr-2" />
-              Remember me
-            </label>
-            <Link className="hover:underline">Forgot password?</Link>
-          </div>
-
           {/* Submit Button */}
-          <button
-            type="submit"
-            className="w-full bg-purple-600 hover:bg-purple-700  p-2 rounded-lg font-semibold transition"
-          >
+          <button type="submit"
+            className="w-full bg-purple-600 hover:bg-purple-700 p-2 rounded-lg font-semibold transition">
             Sign Up
           </button>
         </form>
 
-        {/* Already have an account? */}
+        {/* Already have an account */}
         <p className="text-center text-sm mt-4 text-white">
-          Already have an account? <Link to={user.loginRoute} className="underline hover:text-purple-300">Login</Link>
+          Already have an account? <Link to={loginRoute} className="underline hover:text-purple-300">Login</Link>
         </p>
       </div>
     </div>
   );
 };
-
-

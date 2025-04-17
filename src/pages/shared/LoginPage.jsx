@@ -1,11 +1,11 @@
 import React from 'react';
-
 import { useForm } from "react-hook-form";
 import { axiosInstance } from '../../config/axiosinstance';
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { clearUser, saveUser } from "../../redux/features/userSlice";
-
+import { saveTheater, clearTheater } from "../../redux/features/theaterSlice";
+import { toast } from "react-hot-toast";
 
 
 export const LoginPage=({role})=> {
@@ -32,17 +32,26 @@ export const LoginPage=({role})=> {
 
         try {
             const response = await axiosInstance({
-                method: "PUT",
+                method: "POST",
                 url: user.loginAPI,
                 data: data,
+                withCredentials: true,
             });
             console.log("response====", response);
-            dispatch(saveUser(response?.data?.data));
-            // toast.success("Login success");
+            if (role === "theater") {
+              dispatch(saveTheater(response?.data?.data));
+            } else {
+              dispatch(saveUser(response?.data?.data));
+            }
+            toast.success("Login success");
             navigate(user.profileRoute);
         } catch (error) {
+          if (role === "theater") {
+            dispatch(clearTheater());
+          } else {
             dispatch(clearUser());
-            // toast.error("Login Failed");
+          }
+            toast.error("Login Failed");
             console.log(error);
         }
     };
@@ -52,7 +61,7 @@ export const LoginPage=({role})=> {
 
 
   return (
-    <div className="min-h-screen flex justify-center items-center relative bg-gradient-to-b from-purple-800 to-purple-900">
+    <div className="min-h-screen flex justify-center items-center relative bg-gradient-to-b" >
       {/* Background Image */}
       <div
         className="absolute inset-0 bg-no-repeat bg-cover bg-center"

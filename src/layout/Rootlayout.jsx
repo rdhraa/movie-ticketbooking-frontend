@@ -8,37 +8,44 @@ import { axiosInstance } from "../config/axiosinstance";
 import { clearUser, saveUser } from "../redux/features/userSlice";
 
 export const RootLayout = () => {
-    const user = useSelector((state) => state.user);
-    const [isLoading, setIsLoading] = useState(true);
-    console.log("user===", user);
+  const user = useSelector((state) => state.user);
+  const [isLoading, setIsLoading] = useState(true);
 
-    const dispatch = useDispatch();
-    const location = useLocation();
+  const dispatch = useDispatch();
+  const location = useLocation();
 
-    const checkUser = async () => {
-        try {
-            const response = await axiosInstance({ method: "GET", url: "/user/check-user" });
-            console.log(response, "========checkUser response");
-            dispatch(saveUser());
-            setIsLoading(false);
-        } catch (error) {
-            console.log(error);
-            dispatch(clearUser());
-            setIsLoading(false)
-        }
-    };
+  const checkUser = async () => {
+    try {
+      const response = await axiosInstance({ method: "GET", url: "/user/check-user" });
+      dispatch(saveUser());
+      setIsLoading(false);
+    } catch (error) {
+      console.log(error);
+      dispatch(clearUser());
+      setIsLoading(false);
+    }
+  };
 
-    useEffect(() => {
-        checkUser();
-    }, [location.pathname]);
+  useEffect(() => {
+    checkUser();
+  }, [location.pathname]);
 
-    return isLoading ? null : (
-        <div>
-            {user.isUserAuth ? <UserHeader /> : <Header />}
-            <div className="min-h-96">
-                <Outlet />
-            </div>
-            <Footer />
-        </div>
-    );
+  return isLoading ? null : (
+    <div className="flex min-h-screen flex-col ">
+      {/* Header */}
+      <div className="sticky top-0 z-50 shadow-md ">
+        {user.isUserAuth ? <UserHeader /> : <Header />}
+      </div>
+
+      {/* Main Content */}
+      <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6">
+        <Outlet />
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-white border-t mt-auto">
+        <Footer />
+      </footer>
+    </div>
+  );
 };

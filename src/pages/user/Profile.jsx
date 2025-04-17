@@ -5,7 +5,6 @@ import { axiosInstance } from '../../config/axiosinstance';
 import { ChangePasswordModal } from '../../components/user/ChangePasswordModal';
 import { useNavigate } from "react-router-dom";
 
-
 export const Profile = () => {
   const [userDetails, isLoading, error] = Usefetch('/user/profile');
   const [showOrders, setShowOrders] = useState(false);
@@ -17,19 +16,17 @@ export const Profile = () => {
   const [showChangePassword, setShowChangePassword] = useState(false);
 
   const navigate = useNavigate();
+
   const handleLogout = async () => {
     try {
       await axiosInstance.get('/user/logout');
-      // Optionally clear local storage if storing user info
       localStorage.removeItem("user");
-      // Redirect to login page or home
       navigate("/login");
     } catch (err) {
       console.error("Logout failed:", err);
     }
   };
 
-  //fetch tickets
   const fetchTickets = async () => {
     try {
       setLoadingTickets(true);
@@ -44,28 +41,20 @@ export const Profile = () => {
     }
   };
 
-  
-
-  // Load tickets when showOrders is toggled ON
   useEffect(() => {
-    if (showOrders) {
-      fetchTickets();
-    }
+    if (showOrders) fetchTickets();
   }, [showOrders]);
 
-  // Cancel a ticket
   const handleCancel = async (ticketId) => {
     setIsCancelling(ticketId);
     try {
-      const res = await fetch(`/tickets/${ticketId}/cancel`, {
-        method: 'PATCH',
-        credentials: 'include',
-      });
 
-      const data = await res.json();
+      const res = await axiosInstance.patch(`/tickets/${ticketId}/cancel`);
+      const data = res.data;
+
       if (res.ok) {
         alert('Ticket cancelled successfully.');
-        fetchTickets(); // Refresh ticket list
+        fetchTickets();
       } else {
         alert(data.message || 'Failed to cancel ticket.');
       }
@@ -78,85 +67,86 @@ export const Profile = () => {
   };
 
   return (
-    <div className="flex flex-col items-center p-6 bg-gray-100 rounded-lg shadow-lg w-full max-w-3xl mx-auto">
-      <div className="flex flex-col items-center mb-6">
+    <div className="max-w-4xl mx-auto p-4 sm:p-6 md:p-8 bg-gray-100 rounded-lg shadow-md">
+      <div className="flex flex-col items-center mb-8">
         <img
           src={userDetails?.profilePic}
-          alt="profilepic"
-          className="w-32 h-32 rounded-full object-cover mb-4"
+          alt="Profile"
+          className="w-28 h-28 rounded-full object-cover mb-3"
         />
-        <h1 className="text-2xl font-semibold text-gray-800">{`Welcome ${userDetails?.name}`}</h1>
-        <p className="text-gray-600">Email ID: {userDetails?.email}</p>
+        <h1 className="text-xl font-semibold text-gray-800">{`Welcome, ${userDetails?.name}`}</h1>
+        <p className="text-gray-600">Email: {userDetails?.email}</p>
         <p className="text-gray-600">Mobile: {userDetails?.mobile}</p>
       </div>
 
-      <div className="flex gap-4 mb-6">
-      <button
-        className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-        onClick={() => setShowEditModal(true)}
-      >
-      Edit Profile
-      </button>
-      {showEditModal && (
-      <EditProfileModal
-      user={userDetails}
-      onClose={() => setShowEditModal(false)}
-      onProfileUpdated={() => window.location.reload()}
-     />
-     )}
+      <div className="flex flex-wrap gap-3 justify-center mb-6">
+        <button
+          className="px-5 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+          onClick={() => setShowEditModal(true)}
+        >
+          Edit Profile
+        </button>
+
+        {showEditModal && (
+          <EditProfileModal
+            user={userDetails}
+            onClose={() => setShowEditModal(false)}
+            onProfileUpdated={() => window.location.reload()}
+          />
+        )}
 
         <button
-          className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+          className="px-5 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
           onClick={() => setShowOrders(!showOrders)}
         >
           My Orders
         </button>
+
         <button
-           className="px-6 py-2 bg-teal-500 rounded-lg hover:bg-teal-600"
-           onClick={() => setShowChangePassword(true)}
+          className="px-5 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600"
+          onClick={() => setShowChangePassword(true)}
         >
-           Change Password
+          Change Password
         </button>
+
         {showChangePassword && (
-        <ChangePasswordModal onClose={() => setShowChangePassword(false)} />
+          <ChangePasswordModal onClose={() => setShowChangePassword(false)} />
         )}
 
-       <button
-        onClick={handleLogout}
-        className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+        <button
+          onClick={handleLogout}
+          className="px-5 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
         >
-  Logout
-</button>
+          Logout
+        </button>
       </div>
 
       {showOrders && (
-        <div className="bg-gray-50 p-4 rounded-lg shadow-md w-full mt-4">
+        <div className="bg-white p-4 rounded-lg shadow-md w-full">
           {loadingTickets ? (
             <p className="text-center text-gray-600">Loading your tickets...</p>
           ) : ticketError ? (
             <p className="text-center text-red-500">{ticketError}</p>
           ) : userTickets.length === 0 ? (
-            <p className="text-center text-gray-600">You have no tickets yet.</p>
+            <p className="text-center text-gray-500">You have no tickets yet.</p>
           ) : (
             <ul className="space-y-4">
               {userTickets.map((ticket) => (
                 <li
                   key={ticket._id}
-                  className="bg-white p-4 rounded-lg shadow flex flex-col md:flex-row md:items-center justify-between"
+                  className="bg-gray-50 p-4 rounded-md border border-gray-200 flex flex-col md:flex-row md:justify-between md:items-center"
                 >
-                  <div>
-                    <p className="font-semibold text-lg">Ticket #{ticket.ticketNumber}</p>
-                    <p className="text-gray-700">Seat: {ticket.seatNumber}</p>
-                    <p className="text-gray-700">Status: {ticket.status}</p>
-                    <p className="text-gray-700">Price: ₹{ticket.price}</p>
-                    <p className="text-gray-700">
-                      Booking Time: {new Date(ticket.bookingTime).toLocaleString()}
-                    </p>
+                  <div className="text-sm text-gray-700">
+                    <p className="font-medium text-black mb-1">Ticket #{ticket.ticketNumber}</p>
+                    <p>Seat: {ticket.seatNumber}</p>
+                    <p>Status: {ticket.status}</p>
+                    <p>Price: ₹{ticket.price}</p>
+                    <p>Booking Time: {new Date(ticket.bookingTime).toLocaleString()}</p>
                   </div>
                   {ticket.status === 'booked' && (
                     <button
                       disabled={isCancelling === ticket._id}
-                      className={`mt-4 md:mt-0 px-4 py-2 text-white rounded ${
+                      className={`mt-4 md:mt-0 px-4 py-2 text-white rounded-md ${
                         isCancelling === ticket._id
                           ? 'bg-red-300'
                           : 'bg-red-500 hover:bg-red-600'
