@@ -6,7 +6,7 @@ import { useDispatch } from "react-redux";
 import { clearUser, saveUser } from "../../redux/features/userSlice";
 import { saveTheater, clearTheater } from "../../redux/features/theaterSlice";
 import { toast } from "react-hot-toast";
-
+import { useState } from 'react';
 
 export const LoginPage=({role})=> {
 
@@ -14,6 +14,7 @@ export const LoginPage=({role})=> {
   const { register, handleSubmit } = useForm();
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const [showPassword, setShowPassword] = useState(false);
 
     const user = {
         role: "user",
@@ -51,9 +52,12 @@ export const LoginPage=({role})=> {
           } else {
             dispatch(clearUser());
           }
-            toast.error("Login Failed");
-            console.log(error);
+          const errorMessage =
+            error?.response?.data?.message || "Login Failed. Please try again.";
+          toast.error(errorMessage);
+          console.log(error);
         }
+        
     };
 
 
@@ -85,15 +89,22 @@ export const LoginPage=({role})=> {
             <i className="absolute right-3 top-2  font-normal not-italic">👤</i>
           </div>
           <div className="mb-4 relative">
-            <input
-              className="w-full p-2 rounded-lg bg-white placeholder-gray-500 bg-opacity-20 text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-400"
-              type="password"
-              id="password"
-              placeholder="Password"
-              {...register("password")}
-            />
-            <i className="absolute right-3 top-2  font-normal not-italic">🔒</i>
-          </div>
+  <input
+    className="w-full p-2 rounded-lg bg-white placeholder-gray-500 bg-opacity-20 text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-400"
+    type={showPassword ? "text" : "password"}
+    id="password"
+    placeholder="Password"
+    {...register("password")}
+  />
+  <button
+    type="button"
+    onClick={() => setShowPassword(!showPassword)}
+    className="absolute right-3 top-2 text-lg text-black"
+  >
+    {showPassword ? "🙈" : "👁️"}
+  </button>
+</div>
+
           <div className="flex justify-between items-center text-sm text-white mb-4">
             <label className="flex items-center">
               <input type="checkbox" className="mr-2 " />

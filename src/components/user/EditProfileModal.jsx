@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
+import { axiosInstance } from '../../config/axiosinstance';
 
 // Validation schema
 const schema = yup.object().shape({
@@ -15,6 +16,9 @@ const schema = yup.object().shape({
 
 export const EditProfileModal = ({ user, onClose, onProfileUpdated }) => {
   const [uploading, setUploading] = useState(false);
+  const [preview, setPreview] = useState(user?.profilePic);
+  const [selectedFile, setSelectedFile] = useState(null);
+
   const {
     register,
     handleSubmit,
@@ -25,51 +29,47 @@ export const EditProfileModal = ({ user, onClose, onProfileUpdated }) => {
     resolver: yupResolver(schema),
   });
 
-  const handleUpload = async (e) => {
+  const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    setUploading(true);
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", "your_upload_preset");
-
-    try {
-      const res = await fetch("https://api.cloudinary.com/v1_1/your_cloud_name/image/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      setValue("profilePic", data.secure_url);
-    } catch (err) {
-      console.error("Upload failed", err);
-    } finally {
-      setUploading(false);
-    }
+    setSelectedFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setPreview(reader.result);
+    reader.readAsDataURL(file);
   };
 
   const onSubmit = async (formData) => {
     try {
-      const res = await fetch("/user/update", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(formData),
+      setUploading(true);
+      const form = new FormData();
+      form.append("name", formData.name);
+      form.append("email", formData.email);
+      form.append("mobile", formData.mobile);
+      if (selectedFile) {
+        form.append("profilePic", selectedFile);
+      }
+  
+      const res = await axiosInstance.put("/user/update", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+        withCredentials: true,
       });
-
-      const data = await res.json();
-      if (res.ok) {
+  
+      if (res.status === 200) {
         alert("Profile updated");
         onProfileUpdated();
         onClose();
       } else {
-        alert(data.message || "Update failed");
+        alert(res.data.message || "Update failed");
       }
     } catch (error) {
       alert("Something went wrong");
       console.error(error);
+    } finally {
+      setUploading(false);
     }
   };
+  
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4 sm:px-0">
@@ -79,14 +79,14 @@ export const EditProfileModal = ({ user, onClose, onProfileUpdated }) => {
           {/* Profile Pic Upload */}
           <div className="flex justify-center">
             <label className="cursor-pointer flex flex-col items-center">
-              <input type="file" hidden onChange={handleUpload} />
+              <input type="file" hidden accept="image/*" onChange={handleImageChange} />
               <img
-                src={user?.profilePic}
+                src={preview}
                 alt="profile"
                 className="w-24 h-24 rounded-full object-cover border-2 border-gray-300"
               />
               <p className="text-sm text-blue-500 mt-2">
-                {uploading ? "Uploading..." : "Change Photo"}
+                {uploading ? "Saving..." : "Change Photo"}
               </p>
             </label>
           </div>
@@ -96,7 +96,7 @@ export const EditProfileModal = ({ user, onClose, onProfileUpdated }) => {
             <input
               {...register("name")}
               placeholder="Name"
-              className="w-full px-4 py-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-500 bg-white dark:bg-gray-700 dark:text-wite"
+              className="w-full px-4 py-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-500 bg-white dark:bg-gray-700 dark:text-white"
             />
             <p className="text-red-500 text-sm">{errors.name?.message}</p>
           </div>
@@ -125,9 +125,10 @@ export const EditProfileModal = ({ user, onClose, onProfileUpdated }) => {
           <div className="flex justify-between mt-6">
             <button
               type="submit"
+              disabled={uploading}
               className="w-full mr-2 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
             >
-              Save
+              {uploading ? "Saving..." : "Save"}
             </button>
             <button
               type="button"
