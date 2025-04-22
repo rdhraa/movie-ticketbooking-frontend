@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { AverageRating } from '../../components/user/AverageRating'; 
 
 export const FilmCards = ({ film }) => {
   const navigate = useNavigate();
@@ -20,9 +21,12 @@ export const FilmCards = ({ film }) => {
         className="w-full h-48 sm:h-52 md:h-56 object-cover"
       />
       <div className="p-3 text-center">
-        <p className="text-yellow-400 text-sm font-semibold">{film?.rating || 'N/A'} ★</p>
+        <p className="text-yellow-400 text-sm font-semibold">
+          <AverageRating filmId={film?._id} /> 
+        </p>
         <h3 className="text-sm sm:text-base font-bold mt-1 text-white truncate">{film?.title}</h3>
       </div>
     </motion.div>
   );
 };
+

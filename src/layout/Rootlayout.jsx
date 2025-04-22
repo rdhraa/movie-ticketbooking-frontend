@@ -16,8 +16,9 @@ export const RootLayout = () => {
 
   const checkUser = async () => {
     try {
-      const response = await axiosInstance({ method: "GET", url: "/user/check-user" });
-      dispatch(saveUser());
+      const response = await axiosInstance({ method: "GET", url: "/user/check-user",withCredentials: true, });
+      const user = response.data?.data;
+      dispatch(saveUser(response.data.data));
       setIsLoading(false);
     } catch (error) {
       console.log(error);
@@ -25,6 +26,7 @@ export const RootLayout = () => {
       setIsLoading(false);
     }
   };
+
 
   useEffect(() => {
     checkUser();

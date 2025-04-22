@@ -35,6 +35,7 @@ import { Cancel } from "../pages/user/Cancel";
 import AdminProtectedRoute from "./AdminProtectedRoute";
 import TheaterProtectedRoute from "./TheaterProtectedRoute";
 
+
 export const router = createBrowserRouter([
   {
     path: "",
@@ -54,7 +55,6 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute />,
         children: [
           { path: "profile", element: <Profile /> },
-          { path: "payment", element: <h1>payment</h1> },
           { path: "payment/success", element: <Success /> },
           { path: "payment/cancel", element: <Cancel /> },
         ],
